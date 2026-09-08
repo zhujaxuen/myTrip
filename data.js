@@ -108,6 +108,7 @@ const TRIP = {
       lon: -49.2733,
       date: "31 out",
       tag: "Retorno",
+      showLabel: false,
       description:
         "Chegada ao Brasil no dia 31/10, após a parada em Istambul.",
     },

@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import { TRIP, ROUTE_STYLES } from "./data.js";
 
 // ============================================================
@@ -25,6 +26,11 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 camera.position.set(0, 1.2, 6.2);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.className = "label-renderer";
+document.body.appendChild(labelRenderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -174,6 +180,16 @@ function buildMarkers() {
     const ring = new THREE.Mesh(ringGeo, ringMat);
     ring.position.z = 0.001;
     markerGroup.add(ring);
+
+    if (stop.showLabel !== false) {
+      const label = document.createElement("div");
+      label.className = "globe-label";
+      label.textContent = stop.name;
+
+      const labelObject = new CSS2DObject(label);
+      labelObject.position.z = 0.12;
+      markerGroup.add(labelObject);
+    }
 
     globeGroup.add(markerGroup);
     markerObjects.push({ group: markerGroup, dot, ring, stop });
@@ -372,6 +388,7 @@ function animate() {
 
   controls.update();
   renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
 }
 animate();
 
@@ -383,6 +400,7 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  labelRenderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // Seleciona a primeira parada por padrão
