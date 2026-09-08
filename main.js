@@ -25,7 +25,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 1.35, 7.2);
+camera.position.set(0, 1.35, 8.8);
 
 const labelRenderer = new CSS2DRenderer();
 labelRenderer.setSize(window.innerWidth, window.innerHeight);
@@ -40,7 +40,7 @@ controls.maxDistance = 12;
 controls.rotateSpeed = 0.45;
 
 if (window.innerWidth <= 720) {
-  camera.position.set(0, 0.6, 8.6);
+  camera.position.set(0, 0.6, 10.8);
   controls.target.set(0, -0.7, 0);
   controls.update();
 }
