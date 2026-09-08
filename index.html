@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Minha viagem à China</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="globe-canvas"></canvas>
+
+  <header>
+    <div class="title-block">
+      <h1 id="trip-title">Minha viagem à China</h1>
+      <p id="trip-subtitle">Um roteiro pelo país, do norte imperial ao sul tropical</p>
+    </div>
+    <div class="header-controls">
+      <button id="rotation-toggle" class="rotation-toggle" type="button" aria-pressed="false">
+        Iniciar giro
+      </button>
+      <div class="legend" id="legend"></div>
+    </div>
+  </header>
+
+  <div id="panel">
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <div id="floating-card">
+    <h4 id="fc-name"></h4>
+    <span id="fc-date"></span>
+  </div>
+
+  <div class="hint">arraste para girar · role para dar zoom</div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap");
+
+:root {
+  --void: #0a0e1a;
+  --panel: #12182b;
+  --panel-border: rgba(237, 234, 226, 0.09);
+  --vermillion: #c1432e;
+  --gold: #c9a24b;
+  --jade: #6fb3a8;
+  --text: #edeae2;
+  --text-muted: #8891a6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--void);
+  color: var(--text);
+  font-family: "Manrope", sans-serif;
+  overflow: hidden;
+}
+
+#globe-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ---------- Cabeçalho ---------- */
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 28px 32px;
+  pointer-events: none;
+}
+
+header .title-block {
+  pointer-events: auto;
+}
+
+header h1 {
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: clamp(22px, 3vw, 32px);
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  max-width: 340px;
+}
+
+.legend {
+  pointer-events: auto;
+  display: flex;
+  gap: 16px;
+  background: rgba(18, 24, 43, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+
+.header-controls {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.rotation-toggle {
+  border: 1px solid rgba(201, 162, 75, 0.45);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: rgba(18, 24, 43, 0.7);
+  color: var(--text);
+  font: 500 13px "Manrope", sans-serif;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.rotation-toggle:hover,
+.rotation-toggle[aria-pressed="true"] {
+  background: rgba(201, 162, 75, 0.16);
+  border-color: var(--gold);
+}
+
+.legend button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: "Manrope", sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 2px;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+.legend button.off {
+  opacity: 0.35;
+}
+
+.legend .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ---------- Painel lateral (roteiro) ---------- */
+
+#panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 340px;
+  z-index: 9;
+  padding: 108px 0 24px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(18, 24, 43, 0.85), rgba(10, 14, 26, 0.92));
+  backdrop-filter: blur(14px);
+  border-right: 1px solid var(--panel-border);
+}
+
+#panel::-webkit-scrollbar {
+  width: 6px;
+}
+#panel::-webkit-scrollbar-thumb {
+  background: rgba(237, 234, 226, 0.15);
+  border-radius: 3px;
+}
+
+.timeline {
+  position: relative;
+  padding: 0 28px;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 34px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--gold), transparent 95%);
+  opacity: 0.35;
+}
+
+.stop {
+  position: relative;
+  padding: 14px 0 14px 24px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.stop:hover {
+  background: rgba(237, 234, 226, 0.04);
+}
+
+.stop.active {
+  background: rgba(201, 162, 75, 0.08);
+}
+
+.stop::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 20px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 162, 75, 0.15);
+}
+
+.stop .date {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stop h3 {
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 18px;
+  margin: 2px 0 4px;
+}
+
+.stop .tag {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--jade);
+  border: 1px solid rgba(111, 179, 168, 0.35);
+  border-radius: 20px;
+  padding: 2px 9px;
+  margin-bottom: 6px;
+}
+
+.stop p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease;
+}
+
+.stop.active p {
+  max-height: 200px;
+  opacity: 1;
+}
+
+/* ---------- Cartão flutuante ao clicar num ponto do globo ---------- */
+
+#floating-card {
+  position: fixed;
+  z-index: 12;
+  max-width: 260px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#floating-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#floating-card h4 {
+  margin: 0 0 2px;
+  font-family: "Fraunces", serif;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+#floating-card span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------- Rodapé de instrução ---------- */
+
+.hint {
+  position: fixed;
+  bottom: 20px;
+  right: 28px;
+  z-index: 10;
+  font-size: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  #panel {
+    width: 100%;
+    height: 40%;
+    bottom: 0;
+    top: auto;
+    padding-top: 20px;
+    border-right: none;
+    border-top: 1px solid var(--panel-border);
+  }
+  header {
+    padding: 18px 18px 0;
+  }
+  header p {
+    display: none;
+  }
+  .legend {
+    display: none;
+  }
+  .header-controls {
+    align-items: flex-end;
+  }
+  .hint {
+    display: none;
+  }
+}
