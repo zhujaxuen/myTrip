@@ -155,6 +155,11 @@ function latLonToVector3(lat, lon, radius) {
 // ============================================================
 
 const markerObjects = []; // { mesh, stop }
+const globeCenter = new THREE.Vector3();
+const markerWorldPosition = new THREE.Vector3();
+const cameraWorldPosition = new THREE.Vector3();
+const cameraDirectionFromGlobe = new THREE.Vector3();
+const markerDirectionFromGlobe = new THREE.Vector3();
 
 function buildMarkers() {
   TRIP.stops.forEach((stop) => {
@@ -190,6 +195,7 @@ function buildMarkers() {
       const labelObject = new CSS2DObject(label);
       labelObject.position.z = 0.12;
       markerGroup.add(labelObject);
+      label = labelObject;
     }
 
     globeGroup.add(markerGroup);
@@ -197,6 +203,22 @@ function buildMarkers() {
   });
 }
 buildMarkers();
+
+function updateLabelVisibility() {
+  camera.getWorldPosition(cameraWorldPosition);
+  globeGroup.getWorldPosition(globeCenter);
+  cameraDirectionFromGlobe.subVectors(cameraWorldPosition, globeCenter).normalize();
+
+  markerObjects.forEach((marker) => {
+    if (!marker.label) return;
+
+    marker.group.getWorldPosition(markerWorldPosition);
+    markerDirectionFromGlobe.subVectors(markerWorldPosition, globeCenter).normalize();
+    const isFacingCamera = markerDirectionFromGlobe.dot(cameraDirectionFromGlobe) > 0.02;
+    marker.label.visible = isFacingCamera;
+    marker.label.element.style.display = isFacingCamera ? "" : "none";
+  });
+}
 
 // ============================================================
 // Rotas (arcos entre pontos)
@@ -386,14 +408,9 @@ function animate() {
     const pulse = 1 + Math.sin(elapsed * 2.4 + i) * 0.18;
     m.ring.scale.setScalar(pulse);
 
-    if (m.label) {
-      const markerPosition = m.group
-        .getWorldPosition(new THREE.Vector3())
-        .normalize();
-      const cameraPosition = camera.position.clone().normalize();
-      m.label.visible = markerPosition.dot(cameraPosition) > 0.08;
-    }
   });
+
+  updateLabelVisibility();
 
   controls.update();
   renderer.render(scene, camera);
