@@ -194,6 +194,8 @@ function createCityLabel(text) {
 
 function buildMarkers() {
   TRIP.stops.forEach((stop) => {
+    if (stop.showMarker === false) return;
+
     const pos = latLonToVector3(stop.lat, stop.lon, GLOBE_RADIUS);
     let label = null;
 
@@ -435,7 +437,7 @@ function animate() {
   const elapsed = clock.getElapsedTime();
 
   if (isAutoRotating) {
-    globeGroup.rotation.y += 0.0009;
+    globeGroup.rotation.y -= 0.0009;
   }
 
   markerObjects.forEach((m, i) => {

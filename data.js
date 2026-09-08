@@ -40,10 +40,10 @@ const TRIP = {
       country: "Turquia",
       lat: 41.0082,
       lon: 28.9784,
-      date: "10–11 e 31 out",
+      date: "10–11 out",
       tag: "Conexão",
       description:
-        "Chegada no dia 10/10, saída no dia 11/10 para Guangzhou e parada no retorno ao Brasil.",
+        "Chegada no dia 10/10 e saída no dia 11/10 para Guangzhou.",
     },
     {
       id: "guangzhou",
@@ -51,10 +51,10 @@ const TRIP = {
       country: "China",
       lat: 23.1291,
       lon: 113.2644,
-      date: "12–17 e 30 out",
+      date: "12–17 out",
       tag: "Chegada",
       description:
-        "Chegada na segunda-feira, 12/10. Estadia até 17/10; retorno de avião no dia 30/10 para conexão em Istambul.",
+        "Chegada na segunda-feira, 12/10. Estadia até 17/10.",
     },
     {
       id: "beijing",
@@ -102,6 +102,30 @@ const TRIP = {
         "Chegada em 27/10. Estadia até 30/10, quando retorna de avião para Guangzhou.",
     },
     {
+      id: "guangzhou-retorno",
+      name: "Guangzhou",
+      country: "China",
+      lat: 23.1291,
+      lon: 113.2644,
+      date: "30 out",
+      tag: "Retorno",
+      showMarker: false,
+      description:
+        "Retorno de avião de Shanghai para Guangzhou no dia 30/10.",
+    },
+    {
+      id: "istambul-retorno",
+      name: "Istambul",
+      country: "Turquia",
+      lat: 41.0082,
+      lon: 28.9784,
+      date: "31 out",
+      tag: "Conexão",
+      showMarker: false,
+      description:
+        "Parada em Istambul durante o voo de volta ao Brasil.",
+    },
+    {
       id: "curitiba-retorno",
       name: "Brasil",
       country: "Brasil",
@@ -124,9 +148,9 @@ const TRIP = {
     { from: "beijing", to: "nanjing", type: "trem" },
     { from: "nanjing", to: "yangzhou", type: "trem" },
     { from: "yangzhou", to: "shanghai", type: "trem" },
-    { from: "shanghai", to: "guangzhou", type: "voo" },
-    { from: "guangzhou", to: "istambul", type: "voo" },
-    { from: "istambul", to: "curitiba-retorno", type: "voo" },
+    { from: "shanghai", to: "guangzhou-retorno", type: "voo" },
+    { from: "guangzhou-retorno", to: "istambul-retorno", type: "voo" },
+    { from: "istambul-retorno", to: "curitiba-retorno", type: "voo" },
   ],
 };
 
