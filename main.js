@@ -45,6 +45,9 @@ if (window.innerWidth <= 430 && window.innerHeight >= 800) {
   controls.update();
 }
 
+const overviewPosition = camera.position.clone();
+const overviewTarget = controls.target.clone();
+
 // Luzes
 scene.add(new THREE.AmbientLight(0xffffff, 0.65));
 const sun = new THREE.DirectionalLight(0xfff2d8, 1.1);
@@ -95,11 +98,29 @@ scene.add(globeGroup);
 
 let isAutoRotating = false;
 const rotationToggle = document.getElementById("rotation-toggle");
+const overviewToggle = document.getElementById("overview-toggle");
+const timelineToggle = document.getElementById("timeline-toggle");
 
 rotationToggle.addEventListener("click", () => {
   isAutoRotating = !isAutoRotating;
   rotationToggle.setAttribute("aria-pressed", String(isAutoRotating));
   rotationToggle.textContent = isAutoRotating ? "Parar giro" : "Iniciar giro";
+});
+
+overviewToggle.addEventListener("click", () => {
+  animateCamera(overviewPosition, overviewTarget);
+  overviewToggle.hidden = true;
+  activeStopId = null;
+  updateTimelineState();
+  routeObjects.forEach((route) => {
+    route.line.material.opacity = 0.85;
+  });
+});
+
+timelineToggle.addEventListener("click", () => {
+  const collapsed = document.getElementById("panel").classList.toggle("collapsed");
+  timelineToggle.setAttribute("aria-expanded", String(!collapsed));
+  timelineToggle.querySelector("span").textContent = collapsed ? "⌃" : "⌄";
 });
 
 const globe = new THREE.Mesh(
@@ -289,14 +310,14 @@ function buildRoutes() {
 
     const style = ROUTE_STYLES[route.type] || ROUTE_STYLES.voo;
     const material = new THREE.LineBasicMaterial({
-      color: style.color,
+      color: route.phase === "volta" ? 0xc1432e : style.color,
       transparent: true,
       opacity: 0.85,
     });
 
     const line = new THREE.Line(geometry, material);
     globeGroup.add(line);
-    routeObjects.push({ line, type: route.type });
+    routeObjects.push({ line, type: route.type, phase: route.phase, from: route.from, to: route.to });
   });
 }
 buildRoutes();
@@ -335,10 +356,34 @@ buildLegend();
 
 let activeStopId = null;
 
+function updateTimelineState() {
+  const activeIndex = TRIP.stops.findIndex((stop) => stop.id === activeStopId);
+  document.querySelectorAll(".stop").forEach((el, index) => {
+    el.classList.toggle("active", el.dataset.id === activeStopId);
+    el.classList.toggle("visited", activeIndex >= 0 && index < activeIndex);
+  });
+}
+
 function buildTimeline() {
   const timeline = document.getElementById("timeline");
 
+  let currentPhase = null;
   TRIP.stops.forEach((stop) => {
+    let phase = currentPhase || "deslocamento";
+    if (stop.id === "guangzhou") phase = "roteiro";
+    if (stop.id === "guangzhou-retorno") phase = "retorno";
+    if (phase !== currentPhase) {
+      const section = document.createElement("div");
+      section.className = `timeline-section ${phase}`;
+      section.textContent = {
+        deslocamento: "Deslocamento para China",
+        roteiro: "Roteiro pela China",
+        retorno: "Retorno ao Brasil",
+      }[phase];
+      timeline.appendChild(section);
+      currentPhase = phase;
+    }
+
     const el = document.createElement("div");
     el.className = "stop";
     el.dataset.id = stop.id;
@@ -357,23 +402,31 @@ buildTimeline();
 function selectStop(id, flyTo) {
   activeStopId = id;
 
-  document.querySelectorAll(".stop").forEach((el) => {
-    el.classList.toggle("active", el.dataset.id === id);
-  });
+  updateTimelineState();
 
   const selectedStop = TRIP.stops.find((stop) => stop.id === id);
   const marker = markerObjects.find((m) => m.stop.id === id);
+  if (selectedStop) {
+    routeObjects.forEach((route) => {
+      const isAdjacent = route.from === id || route.to === id;
+      route.line.material.opacity = isAdjacent ? 0.9 : 0.12;
+    });
+
+  }
+
   if (selectedStop && flyTo) {
     const position = marker
-      ? marker.group.position.clone()
+      ? marker.group.getWorldPosition(markerWorldPosition).clone()
       : latLonToVector3(selectedStop.lat, selectedStop.lon, GLOBE_RADIUS);
     const target = position.normalize().multiplyScalar(3.8);
     animateCamera(target);
+    overviewToggle.hidden = false;
   }
 }
 
-function animateCamera(targetPos) {
+function animateCamera(targetPos, targetLookAt = controls.target.clone()) {
   const startPos = camera.position.clone();
+  const startTarget = controls.target.clone();
   const startTime = performance.now();
   const duration = 900;
 
@@ -381,6 +434,7 @@ function animateCamera(targetPos) {
     const t = Math.min((now - startTime) / duration, 1);
     const eased = 1 - Math.pow(1 - t, 3);
     camera.position.lerpVectors(startPos, targetPos, eased);
+    controls.target.lerpVectors(startTarget, targetLookAt, eased);
     controls.update();
     if (t < 1) requestAnimationFrame(step);
   }
@@ -393,13 +447,13 @@ function animateCamera(targetPos) {
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+const markerWorldPosition = new THREE.Vector3();
 const floatingCard = document.getElementById("floating-card");
 const fcName = document.getElementById("fc-name");
 const fcDate = document.getElementById("fc-date");
 
 function onPointerMove(event) {
-  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  updatePointer(event);
 
   raycaster.setFromCamera(pointer, camera);
   const dots = markerObjects.map((m) => m.dot);
@@ -419,13 +473,19 @@ function onPointerMove(event) {
   }
 }
 
+function updatePointer(event) {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+}
+
 function onClick(event) {
+  updatePointer(event);
   raycaster.setFromCamera(pointer, camera);
   const dots = markerObjects.map((m) => m.dot);
   const hits = raycaster.intersectObjects(dots);
   if (hits.length > 0) {
     const hit = markerObjects.find((m) => m.dot === hits[0].object);
-    selectStop(hit.stop.id, false);
+    selectStop(hit.stop.id, true);
     document.querySelector(`.stop[data-id="${hit.stop.id}"]`)?.scrollIntoView({
       behavior: "smooth",
       block: "center",

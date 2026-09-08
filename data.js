@@ -51,10 +51,46 @@ const TRIP = {
       country: "China",
       lat: 23.1291,
       lon: 113.2644,
-      date: "12–17 out",
+      date: "12 out",
       tag: "Chegada",
       description:
-        "Chegada na segunda-feira, 12/10. Estadia até 17/10.",
+        "Chegada na segunda-feira, 12/10. Ida a Shenzhen no mesmo dia.",
+    },
+    {
+      id: "shenzhen",
+      name: "Shenzhen",
+      country: "China",
+      lat: 22.5431,
+      lon: 114.0579,
+      date: "12–15 out",
+      tag: "Compras",
+      labelOffset: [0.04, 0, 0.05],
+      description:
+        "Estadia em Shenzhen de 12/10 a 15/10. Passeio de metrô até Hong Kong no dia 14/10.",
+    },
+    {
+      id: "hong-kong",
+      name: "Hong Kong",
+      country: "China (RAE)",
+      lat: 22.3193,
+      lon: 114.1694,
+      date: "14 out",
+      tag: "Kowloon Bay",
+      labelOffset: [0, -0.04, 0.05],
+      description:
+        "Passeio de um dia saindo de Shenzhen e retorno de metrô.",
+    },
+    {
+      id: "guangzhou-local",
+      name: "Guangzhou",
+      country: "China",
+      lat: 23.1291,
+      lon: 113.2644,
+      date: "15–17 out",
+      tag: "Canton Fair",
+      showMarker: false,
+      description:
+        "Retorno de metrô de Shenzhen para Guangzhou no dia 15/10. Estadia até 17/10.",
     },
     {
       id: "beijing",
@@ -63,7 +99,7 @@ const TRIP = {
       lat: 39.9042,
       lon: 116.4074,
       date: "17–21 out",
-      tag: "História",
+      tag: "Muralha da China",
       description:
         "Voo de Guangzhou no dia 17/10. Estadia até 21/10.",
     },
@@ -74,7 +110,7 @@ const TRIP = {
       lat: 32.0603,
       lon: 118.7969,
       date: "21–24 out",
-      tag: "Trem",
+      tag: "História",
       labelOffset: [0, -0.025, 0.05],
       description:
         "Viagem de trem partindo de Beijing no dia 21/10. Estadia até 24/10.",
@@ -86,7 +122,7 @@ const TRIP = {
       lat: 32.3936,
       lon: 119.4127,
       date: "24–27 out",
-      tag: "Passeio",
+      tag: "Família ❤️",
       description:
         "Estadia em Yangzhou de 24/10 a 27/10.",
     },
@@ -97,7 +133,7 @@ const TRIP = {
       lat: 31.2304,
       lon: 121.4737,
       date: "27–30 out",
-      tag: "Metrópole",
+      tag: "The Bund",
       description:
         "Chegada em 27/10. Estadia até 30/10, quando retorna de avião para Guangzhou.",
     },
@@ -132,7 +168,7 @@ const TRIP = {
       lat: -23.5505,
       lon: -46.6333,
       date: "31 out",
-      tag: "Retorno",
+      tag: "Conexão",
       showLabel: false,
       description:
         "Chegada a São Paulo no dia 31/10, após a parada em Istambul.",
@@ -153,17 +189,21 @@ const TRIP = {
 
   // Trajetos entre as paradas. "type" pode ser: "voo", "trem" ou "onibus"
   routes: [
-    { from: "curitiba", to: "sao-paulo", type: "voo" },
-    { from: "sao-paulo", to: "istambul", type: "voo" },
-    { from: "istambul", to: "guangzhou", type: "voo" },
-    { from: "guangzhou", to: "beijing", type: "voo" },
-    { from: "beijing", to: "nanjing", type: "trem" },
-    { from: "nanjing", to: "yangzhou", type: "trem" },
-    { from: "yangzhou", to: "shanghai", type: "trem" },
-    { from: "shanghai", to: "guangzhou-retorno", type: "voo" },
-    { from: "guangzhou-retorno", to: "istambul-retorno", type: "voo" },
-    { from: "istambul-retorno", to: "saopaulo-retorno", type: "voo" },
-    { from: "saopaulo-retorno", to: "curitiba-retorno", type: "voo" },
+    { from: "curitiba", to: "sao-paulo", type: "voo", phase: "ida" },
+    { from: "sao-paulo", to: "istambul", type: "voo", phase: "ida" },
+    { from: "istambul", to: "guangzhou", type: "voo", phase: "ida" },
+    { from: "guangzhou", to: "shenzhen", type: "metro", phase: "roteiro" },
+    { from: "shenzhen", to: "hong-kong", type: "metro", phase: "roteiro" },
+    { from: "hong-kong", to: "shenzhen", type: "metro", phase: "roteiro" },
+    { from: "shenzhen", to: "guangzhou-local", type: "metro", phase: "roteiro" },
+    { from: "guangzhou-local", to: "beijing", type: "voo", phase: "roteiro" },
+    { from: "beijing", to: "nanjing", type: "trem", phase: "ida" },
+    { from: "nanjing", to: "yangzhou", type: "trem", phase: "ida" },
+    { from: "yangzhou", to: "shanghai", type: "trem", phase: "ida" },
+    { from: "shanghai", to: "guangzhou-retorno", type: "voo", phase: "volta" },
+    { from: "guangzhou-retorno", to: "istambul-retorno", type: "voo", phase: "volta" },
+    { from: "istambul-retorno", to: "saopaulo-retorno", type: "voo", phase: "volta" },
+    { from: "saopaulo-retorno", to: "curitiba-retorno", type: "voo", phase: "volta" },
   ],
 };
 
@@ -171,6 +211,7 @@ const TRIP = {
 const ROUTE_STYLES = {
   voo: { color: 0xc9a24b, label: "Avião" },
   trem: { color: 0x6fb3a8, label: "Trem" },
+  metro: { color: 0x8e7dff, label: "Metrô" },
   onibus: { color: 0xc1432e, label: "Ônibus" },
 };
 

@@ -133,6 +133,23 @@ header p {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+.overview-toggle,
+.timeline-toggle {
+  border: 1px solid rgba(201, 162, 75, 0.45);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: rgba(18, 24, 43, 0.7);
+  color: var(--text);
+  font: 500 13px "Manrope", sans-serif;
+  cursor: pointer;
+}
+
+.overview-toggle:hover,
+.timeline-toggle:hover {
+  background: rgba(201, 162, 75, 0.16);
+  border-color: var(--gold);
+}
+
 .rotation-toggle:hover,
 .rotation-toggle[aria-pressed="true"] {
   background: rgba(201, 162, 75, 0.16);
@@ -194,6 +211,28 @@ header p {
   padding: 0 28px;
 }
 
+.timeline-section {
+  margin: 0 0 6px;
+  padding: 8px 0 5px 24px;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.timeline-section.roteiro {
+  color: var(--jade);
+  border-top: 1px solid var(--panel-border);
+  margin-top: 10px;
+}
+
+.timeline-section.retorno {
+  color: var(--vermillion);
+  border-top: 1px solid var(--panel-border);
+  margin-top: 10px;
+}
+
 .timeline::before {
   content: "";
   position: absolute;
@@ -219,6 +258,15 @@ header p {
 
 .stop.active {
   background: rgba(201, 162, 75, 0.08);
+}
+
+.stop.visited {
+  opacity: 0.62;
+}
+
+.stop.visited::before {
+  background: var(--jade);
+  box-shadow: 0 0 0 3px rgba(111, 179, 168, 0.12);
 }
 
 .stop::before {
@@ -318,6 +366,10 @@ header p {
   pointer-events: none;
 }
 
+.timeline-toggle {
+  display: none;
+}
+
 @media (max-width: 720px) {
   html,
   body {
@@ -332,6 +384,20 @@ header p {
     padding: 14px 0 max(14px, env(safe-area-inset-bottom));
     border-right: none;
     border-top: 1px solid var(--panel-border);
+  }
+
+  #panel.collapsed {
+    height: 52px;
+    overflow: hidden;
+  }
+
+  .timeline-toggle {
+    display: flex;
+    width: calc(100% - 32px);
+    justify-content: space-between;
+    align-items: center;
+    margin: 0 16px 10px;
+    padding: 8px 12px;
   }
 
   .timeline {
@@ -403,6 +469,11 @@ header p {
   }
 
   .rotation-toggle {
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+
+  .overview-toggle {
     padding: 7px 9px;
     font-size: 11px;
   }

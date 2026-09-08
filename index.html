@@ -15,6 +15,9 @@
       <p id="trip-subtitle">Um roteiro pelo país, do norte imperial ao sul tropical</p>
     </div>
     <div class="header-controls">
+      <button id="overview-toggle" class="overview-toggle" type="button" hidden>
+        Visão geral
+      </button>
       <button id="rotation-toggle" class="rotation-toggle" type="button" aria-pressed="false">
         Iniciar giro
       </button>
@@ -23,6 +26,9 @@
   </header>
 
   <div id="panel">
+    <button id="timeline-toggle" class="timeline-toggle" type="button" aria-expanded="true">
+      Roteiro <span aria-hidden="true">⌄</span>
+    </button>
     <div class="timeline" id="timeline"></div>
   </div>
 
