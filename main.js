@@ -99,7 +99,6 @@ scene.add(globeGroup);
 let isAutoRotating = false;
 const rotationToggle = document.getElementById("rotation-toggle");
 const overviewToggle = document.getElementById("overview-toggle");
-const timelineToggle = document.getElementById("timeline-toggle");
 
 rotationToggle.addEventListener("click", () => {
   isAutoRotating = !isAutoRotating;
@@ -117,11 +116,6 @@ overviewToggle.addEventListener("click", () => {
   });
 });
 
-timelineToggle.addEventListener("click", () => {
-  const collapsed = document.getElementById("panel").classList.toggle("collapsed");
-  timelineToggle.setAttribute("aria-expanded", String(!collapsed));
-  timelineToggle.querySelector("span").textContent = collapsed ? "⌃" : "⌄";
-});
 
 const globe = new THREE.Mesh(
   new THREE.SphereGeometry(GLOBE_RADIUS, 96, 96),

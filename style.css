@@ -133,8 +133,7 @@ header p {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.overview-toggle,
-.timeline-toggle {
+.overview-toggle {
   border: 1px solid rgba(201, 162, 75, 0.45);
   border-radius: 8px;
   padding: 9px 12px;
@@ -144,8 +143,7 @@ header p {
   cursor: pointer;
 }
 
-.overview-toggle:hover,
-.timeline-toggle:hover {
+.overview-toggle:hover {
   background: rgba(201, 162, 75, 0.16);
   border-color: var(--gold);
 }
@@ -366,10 +364,6 @@ header p {
   pointer-events: none;
 }
 
-.timeline-toggle {
-  display: none;
-}
-
 @media (max-width: 720px) {
   html,
   body {
@@ -384,20 +378,6 @@ header p {
     padding: 14px 0 max(14px, env(safe-area-inset-bottom));
     border-right: none;
     border-top: 1px solid var(--panel-border);
-  }
-
-  #panel.collapsed {
-    height: 52px;
-    overflow: hidden;
-  }
-
-  .timeline-toggle {
-    display: flex;
-    width: calc(100% - 32px);
-    justify-content: space-between;
-    align-items: center;
-    margin: 0 16px 10px;
-    padding: 8px 12px;
   }
 
   .timeline {
