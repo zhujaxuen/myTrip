@@ -110,7 +110,7 @@ const TRIP = {
       lat: 32.0603,
       lon: 118.7969,
       date: "21–24 out",
-      tag: "História",
+      tag: "Memorial do massacre de Nanjing",
       labelOffset: [0, -0.025, 0.05],
       description:
         "Viagem de trem partindo de Beijing no dia 21/10. Estadia até 24/10.",
