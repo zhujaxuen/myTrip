@@ -361,9 +361,13 @@ function selectStop(id, flyTo) {
     el.classList.toggle("active", el.dataset.id === id);
   });
 
+  const selectedStop = TRIP.stops.find((stop) => stop.id === id);
   const marker = markerObjects.find((m) => m.stop.id === id);
-  if (marker && flyTo) {
-    const target = marker.group.position.clone().normalize().multiplyScalar(4.6);
+  if (selectedStop && flyTo) {
+    const position = marker
+      ? marker.group.position.clone()
+      : latLonToVector3(selectedStop.lat, selectedStop.lon, GLOBE_RADIUS);
+    const target = position.normalize().multiplyScalar(3.8);
     animateCamera(target);
   }
 }
