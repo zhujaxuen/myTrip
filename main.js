@@ -39,6 +39,12 @@ controls.minDistance = 3;
 controls.maxDistance = 12;
 controls.rotateSpeed = 0.45;
 
+if (window.innerWidth <= 720) {
+  camera.position.set(0, 0.6, 8.6);
+  controls.target.set(0, -0.7, 0);
+  controls.update();
+}
+
 // Luzes
 scene.add(new THREE.AmbientLight(0xffffff, 0.65));
 const sun = new THREE.DirectionalLight(0xfff2d8, 1.1);
