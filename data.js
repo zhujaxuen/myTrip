@@ -18,7 +18,7 @@ const TRIP = {
       country: "Brasil",
       lat: -25.4284,
       lon: -49.2733,
-      date: "09 out, 20h20",
+      date: "09 out",
       tag: "Partida",
       description:
         "Saída de Curitiba às 20h20 com destino a São Paulo.",
