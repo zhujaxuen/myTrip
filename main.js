@@ -158,23 +158,22 @@ const markerObjects = []; // { mesh, stop }
 
 function createCityLabel(text) {
   const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 64;
   const context = canvas.getContext("2d");
-  context.font = '600 26px "Manrope", sans-serif';
+  const font = '600 11px "Manrope", sans-serif';
+  const horizontalPadding = 8;
+  context.font = font;
   const textWidth = context.measureText(text).width;
-
-  context.fillStyle = "rgba(10, 14, 26, 0.84)";
-  context.strokeStyle = "rgba(201, 162, 75, 0.75)";
-  context.lineWidth = 2;
-  context.beginPath();
-  context.roundRect(4, 6, textWidth + 24, 48, 8);
-  context.fill();
-  context.stroke();
+  canvas.width = Math.ceil(textWidth + horizontalPadding * 2);
+  canvas.height = 32;
+  context.font = font;
 
   context.fillStyle = "#edeae2";
+  context.strokeStyle = "rgba(10, 14, 26, 0.95)";
+  context.lineWidth = 4;
+  context.lineJoin = "round";
   context.textBaseline = "middle";
-  context.fillText(text, 16, 31);
+  context.strokeText(text, horizontalPadding, canvas.height / 2);
+  context.fillText(text, horizontalPadding, canvas.height / 2);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
@@ -185,8 +184,11 @@ function createCityLabel(text) {
     depthWrite: false,
   });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set((textWidth + 24) / 120, 0.3, 1);
-  sprite.position.set(0, 0, 0.13);
+  const labelHeight = 0.11;
+  sprite.scale.set((canvas.width / canvas.height) * labelHeight, labelHeight, 1);
+  sprite.userData.baseScale = sprite.scale.clone();
+  sprite.center.set(0.5, 0);
+  sprite.position.set(0, 0, 0.05);
   return sprite;
 }
 
@@ -218,6 +220,9 @@ function buildMarkers() {
 
     if (stop.showLabel !== false) {
       label = createCityLabel(stop.name);
+      if (stop.labelOffset) {
+        label.position.fromArray(stop.labelOffset);
+      }
       markerGroup.add(label);
     }
 
@@ -226,6 +231,28 @@ function buildMarkers() {
   });
 }
 buildMarkers();
+
+function updateMarkerScale() {
+  const distance = camera.position.distanceTo(globeGroup.position);
+  const zoomProgress = THREE.MathUtils.clamp(
+    (distance - controls.minDistance) / (controls.maxDistance - controls.minDistance),
+    0,
+    1
+  );
+  const markerScale = 0.55 + zoomProgress * 0.65;
+  const dotScale = markerScale * 0.5;
+  const ringScale = markerScale * 0.65;
+  const labelScale = 0.35 + zoomProgress * 2.2;
+
+  markerObjects.forEach((marker) => {
+    marker.dot.scale.setScalar(dotScale);
+    marker.ring.scale.setScalar(marker.ring.userData.pulse * ringScale);
+
+    if (marker.label) {
+      marker.label.scale.copy(marker.label.userData.baseScale).multiplyScalar(labelScale);
+    }
+  });
+}
 
 // ============================================================
 // Rotas (arcos entre pontos)
@@ -413,11 +440,11 @@ function animate() {
 
   markerObjects.forEach((m, i) => {
     const pulse = 1 + Math.sin(elapsed * 2.4 + i) * 0.18;
-    m.ring.scale.setScalar(pulse);
-
+    m.ring.userData.pulse = pulse;
   });
 
   controls.update();
+  updateMarkerScale();
   renderer.render(scene, camera);
 }
 animate();
