@@ -126,17 +126,29 @@ const TRIP = {
         "Parada em Istambul durante o voo de volta ao Brasil.",
     },
     {
-      id: "curitiba-retorno",
-      name: "Brasil",
+      id: "saopaulo-retorno",
+      name: "São Paulo",
       country: "Brasil",
-      lat: -25.4284,
-      lon: -49.2733,
+      lat: -23.5505,
+      lon: -46.6333,
       date: "31 out",
       tag: "Retorno",
       showLabel: false,
       description:
-        "Chegada ao Brasil no dia 31/10, após a parada em Istambul.",
+        "Chegada a São Paulo no dia 31/10, após a parada em Istambul.",
     },
+    {
+      id: "curitiba-retorno",
+      name: "Curitiba",
+      country: "Brasil",
+      lat: -25.4284,
+      lon: -49.2733,
+      date: "01 nov",
+      tag: "Retorno",
+      showLabel: false,
+      description:
+        "Chegada a Curitiba no dia 01/11, concluindo a viagem.",
+    }
   ],
 
   // Trajetos entre as paradas. "type" pode ser: "voo", "trem" ou "onibus"
@@ -150,7 +162,8 @@ const TRIP = {
     { from: "yangzhou", to: "shanghai", type: "trem" },
     { from: "shanghai", to: "guangzhou-retorno", type: "voo" },
     { from: "guangzhou-retorno", to: "istambul-retorno", type: "voo" },
-    { from: "istambul-retorno", to: "curitiba-retorno", type: "voo" },
+    { from: "istambul-retorno", to: "saopaulo-retorno", type: "voo" },
+    { from: "saopaulo-retorno", to: "curitiba-retorno", type: "voo" },
   ],
 };
 
