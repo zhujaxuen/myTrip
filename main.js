@@ -159,6 +159,7 @@ const markerObjects = []; // { mesh, stop }
 function buildMarkers() {
   TRIP.stops.forEach((stop) => {
     const pos = latLonToVector3(stop.lat, stop.lon, GLOBE_RADIUS);
+    let label = null;
 
     const markerGroup = new THREE.Group();
     markerGroup.position.copy(pos);
@@ -182,7 +183,7 @@ function buildMarkers() {
     markerGroup.add(ring);
 
     if (stop.showLabel !== false) {
-      const label = document.createElement("div");
+      label = document.createElement("div");
       label.className = "globe-label";
       label.textContent = stop.name;
 
@@ -192,7 +193,7 @@ function buildMarkers() {
     }
 
     globeGroup.add(markerGroup);
-    markerObjects.push({ group: markerGroup, dot, ring, stop });
+    markerObjects.push({ group: markerGroup, dot, ring, label, stop });
   });
 }
 buildMarkers();
@@ -384,6 +385,14 @@ function animate() {
   markerObjects.forEach((m, i) => {
     const pulse = 1 + Math.sin(elapsed * 2.4 + i) * 0.18;
     m.ring.scale.setScalar(pulse);
+
+    if (m.label) {
+      const markerPosition = m.group
+        .getWorldPosition(new THREE.Vector3())
+        .normalize();
+      const cameraPosition = camera.position.clone().normalize();
+      m.label.visible = markerPosition.dot(cameraPosition) > 0.08;
+    }
   });
 
   controls.update();
