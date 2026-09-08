@@ -35,7 +35,13 @@ controls.rotateSpeed = 0.45;
 
 if (window.innerWidth <= 720) {
   camera.position.set(0, 0.6, 10.8);
-  controls.target.set(0, -0.7, 0);
+  controls.target.set(0, -1.05, 0);
+  controls.update();
+}
+
+if (window.innerWidth <= 430 && window.innerHeight >= 800) {
+  camera.position.set(0, 0.65, 11.4);
+  controls.target.set(0, -1.55, 0);
   controls.update();
 }
 

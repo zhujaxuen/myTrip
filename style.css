@@ -66,6 +66,20 @@ header {
   pointer-events: none;
 }
 
+header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 340px;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(18, 24, 43, 0.85), rgba(10, 14, 26, 0.92));
+  background-size: 100% 100vh;
+  background-repeat: no-repeat;
+  backdrop-filter: blur(14px);
+}
+
 header .title-block {
   pointer-events: auto;
   min-width: 0;
@@ -155,12 +169,12 @@ header p {
 
 #panel {
   position: fixed;
-  top: 96px;
+  top: 0;
   left: 0;
   bottom: 0;
   width: 340px;
   z-index: 9;
-  padding: 12px 0 24px;
+  padding: 108px 0 24px;
   overflow-y: auto;
   background: linear-gradient(180deg, rgba(18, 24, 43, 0.85), rgba(10, 14, 26, 0.92));
   backdrop-filter: blur(14px);
@@ -346,6 +360,12 @@ header p {
     gap: 8px;
   }
 
+  header::before {
+    width: 100%;
+    bottom: auto;
+    height: 72px;
+  }
+
   header h1 {
     font-size: 23px;
   }
@@ -407,5 +427,11 @@ header p {
 
   header h1 {
     font-size: 21px;
+  }
+}
+
+@media (max-width: 430px) and (min-height: 800px) {
+  #panel {
+    height: min(35vh, 300px);
   }
 }
