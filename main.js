@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { CSS2DObject, CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 import { TRIP, ROUTE_STYLES } from "./data.js";
 
 // ============================================================
@@ -26,11 +25,6 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 camera.position.set(0, 1.35, 8.8);
-
-const labelRenderer = new CSS2DRenderer();
-labelRenderer.setSize(window.innerWidth, window.innerHeight);
-labelRenderer.domElement.className = "label-renderer";
-document.body.appendChild(labelRenderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -161,11 +155,40 @@ function latLonToVector3(lat, lon, radius) {
 // ============================================================
 
 const markerObjects = []; // { mesh, stop }
-const globeCenter = new THREE.Vector3();
-const markerWorldPosition = new THREE.Vector3();
-const cameraWorldPosition = new THREE.Vector3();
-const cameraDirectionFromGlobe = new THREE.Vector3();
-const markerDirectionFromGlobe = new THREE.Vector3();
+
+function createCityLabel(text) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 64;
+  const context = canvas.getContext("2d");
+  context.font = '600 26px "Manrope", sans-serif';
+  const textWidth = context.measureText(text).width;
+
+  context.fillStyle = "rgba(10, 14, 26, 0.84)";
+  context.strokeStyle = "rgba(201, 162, 75, 0.75)";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.roundRect(4, 6, textWidth + 24, 48, 8);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "#edeae2";
+  context.textBaseline = "middle";
+  context.fillText(text, 16, 31);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: true,
+    depthWrite: false,
+  });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set((textWidth + 24) / 120, 0.3, 1);
+  sprite.position.set(0, 0, 0.13);
+  return sprite;
+}
 
 function buildMarkers() {
   TRIP.stops.forEach((stop) => {
@@ -194,14 +217,8 @@ function buildMarkers() {
     markerGroup.add(ring);
 
     if (stop.showLabel !== false) {
-      label = document.createElement("div");
-      label.className = "globe-label";
-      label.textContent = stop.name;
-
-      const labelObject = new CSS2DObject(label);
-      labelObject.position.z = 0.12;
-      markerGroup.add(labelObject);
-      label = labelObject;
+      label = createCityLabel(stop.name);
+      markerGroup.add(label);
     }
 
     globeGroup.add(markerGroup);
@@ -209,22 +226,6 @@ function buildMarkers() {
   });
 }
 buildMarkers();
-
-function updateLabelVisibility() {
-  camera.getWorldPosition(cameraWorldPosition);
-  globeGroup.getWorldPosition(globeCenter);
-  cameraDirectionFromGlobe.subVectors(cameraWorldPosition, globeCenter).normalize();
-
-  markerObjects.forEach((marker) => {
-    if (!marker.label) return;
-
-    marker.group.getWorldPosition(markerWorldPosition);
-    markerDirectionFromGlobe.subVectors(markerWorldPosition, globeCenter).normalize();
-    const isFacingCamera = markerDirectionFromGlobe.dot(cameraDirectionFromGlobe) > 0.02;
-    marker.label.visible = isFacingCamera;
-    marker.label.element.style.display = isFacingCamera ? "" : "none";
-  });
-}
 
 // ============================================================
 // Rotas (arcos entre pontos)
@@ -416,11 +417,8 @@ function animate() {
 
   });
 
-  updateLabelVisibility();
-
   controls.update();
   renderer.render(scene, camera);
-  labelRenderer.render(scene, camera);
 }
 animate();
 
@@ -432,7 +430,6 @@ window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  labelRenderer.setSize(window.innerWidth, window.innerHeight);
 });
 
 // Seleciona a primeira parada por padrão
