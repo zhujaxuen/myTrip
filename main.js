@@ -107,11 +107,13 @@ rotationToggle.addEventListener("click", () => {
 });
 
 overviewToggle.addEventListener("click", () => {
+  activeCameraFollow = null;
   animateCamera(overviewPosition, overviewTarget);
   overviewToggle.hidden = true;
   activeStopId = null;
   updateTimelineState();
   routeObjects.forEach((route) => {
+    route.line.visible = true;
     route.line.material.opacity = 0.85;
     if (route.icon) route.icon.visible = false;
   });
@@ -283,13 +285,21 @@ function updateMarkerScale() {
 // ============================================================
 
 const routeObjects = []; // { line, icon, type }
+const FLIGHT_DURATION_SECONDS = 14;
+const LONG_FLIGHT_DURATION_SECONDS = 10;
+const TRAIN_DURATION_SECONDS = 9;
+const ROUTES_WITHOUT_ICON = new Set(["nanjing:yangzhou"]);
+const CAMERA_FOLLOW_ROUTE_KEYS = new Set([
+  "sao-paulo:istambul",
+  "istambul:guangzhou",
+]);
+let activeCameraFollow = null;
+const routeIconWorldPosition = new THREE.Vector3();
 
 function createRouteIcon(type) {
   const symbols = {
     voo: String.fromCodePoint(0x2708),
     trem: String.fromCodePoint(0x1f686),
-    metro: String.fromCodePoint(0x1f687),
-    onibus: String.fromCodePoint(0x1f68c),
   };
   const symbol = symbols[type];
   if (!symbol) return null;
@@ -297,24 +307,33 @@ function createRouteIcon(type) {
   canvas.width = 64;
   canvas.height = 64;
   const context = canvas.getContext("2d");
-  context.font = '600 24px "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
+  // Mantém o avião com o mesmo glifo original; apenas o trem usa a fonte emoji.
+  context.font =
+    type === "voo"
+      ? '600 22px "Segoe UI Symbol", sans-serif'
+      : '600 22px "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = "#ffffff";
   context.strokeStyle = "#05070d";
   context.lineWidth = 2;
   context.lineJoin = "round";
-  // Os símbolos normalmente apontam para a direita. Giramos o desenho para
-  // que a frente do veículo corresponda ao eixo Y do marcador.
-  context.translate(32, 32);
-  context.rotate(-Math.PI / 2);
-  context.strokeText(symbol, 0, 0);
-  context.fillText(symbol, 0, 0);
+  context.strokeText(symbol, 32, 32);
+  context.fillText(symbol, 32, 32);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
+  if (type === "trem") {
+    const icon = new THREE.Sprite(
+      new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true })
+    );
+    icon.scale.setScalar(0.08);
+    icon.visible = false;
+    return icon;
+  }
+
   const icon = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.16, 0.16),
+    new THREE.PlaneGeometry(0.08, 0.08),
     new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
@@ -327,10 +346,53 @@ function createRouteIcon(type) {
   return icon;
 }
 
+function positionFlightIcon(icon, curve, progress) {
+  icon.position.copy(curve.getPointAt(progress));
+
+  // O eixo X do desenho do avião aponta para a frente. Alinhamos esse eixo
+  // com a tangente da curva para que ele siga o sentido origem → destino.
+  const direction = curve.getTangentAt(progress).normalize();
+  const normal = icon.position.clone().normalize();
+  const fixedUp = new THREE.Vector3().crossVectors(normal, direction).normalize();
+  icon.quaternion.setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(direction, fixedUp, normal)
+  );
+}
+
+function getRouteProgress(route, duration, elapsed) {
+  const startedAt = route.animationStartedAt;
+  const offset = startedAt === null ? route.iconOffset : 0;
+  const startTime = startedAt === null ? 0 : startedAt;
+  return ((elapsed - startTime) / duration + offset) % 1;
+}
+
+function getFlightDuration(route) {
+  const routeKey = `${route.from}:${route.to}`;
+  return CAMERA_FOLLOW_ROUTE_KEYS.has(routeKey)
+    ? LONG_FLIGHT_DURATION_SECONDS
+    : FLIGHT_DURATION_SECONDS;
+}
+
+function startCameraFollow(route) {
+  if (route.hasCameraFollowed || !route.icon) return false;
+
+  const now = clock.getElapsedTime();
+  route.hasCameraFollowed = true;
+  route.animationStartedAt = now;
+  positionFlightIcon(route.icon, route.curve, 0);
+  activeCameraFollow = {
+    route,
+    endsAt: now + getFlightDuration(route),
+    restorePosition: camera.position.clone(),
+    restoreTarget: controls.target.clone(),
+  };
+  return true;
+}
+
 function buildRoutes() {
   const stopsById = Object.fromEntries(TRIP.stops.map((s) => [s.id, s]));
 
-  TRIP.routes.forEach((route) => {
+  TRIP.routes.forEach((route, index) => {
     const from = stopsById[route.from];
     const to = stopsById[route.to];
     if (!from || !to) return;
@@ -355,18 +417,27 @@ function buildRoutes() {
 
     const line = new THREE.Line(geometry, material);
     globeGroup.add(line);
-    const icon = createRouteIcon(route.type);
+    const routeKey = `${route.from}:${route.to}`;
+    const icon = ROUTES_WITHOUT_ICON.has(routeKey) ? null : createRouteIcon(route.type);
     if (icon) {
       icon.position.copy(curve.getPoint(0.5));
-      const direction = curve.getTangent(0.5).normalize();
-      const normal = icon.position.clone().normalize();
-      const sideways = new THREE.Vector3().crossVectors(direction, normal).normalize();
-      icon.quaternion.setFromRotationMatrix(
-        new THREE.Matrix4().makeBasis(sideways, direction, normal)
-      );
+      if (route.type === "voo") {
+        positionFlightIcon(icon, curve, 0.5);
+      }
       globeGroup.add(icon);
     }
-    routeObjects.push({ line, icon, type: route.type, phase: route.phase, from: route.from, to: route.to });
+    routeObjects.push({
+      line,
+      icon,
+      type: route.type,
+      phase: route.phase,
+      from: route.from,
+      to: route.to,
+      curve,
+      iconOffset: index / TRIP.routes.length,
+      animationStartedAt: null,
+      hasCameraFollowed: false,
+    });
   });
 }
 buildRoutes();
@@ -503,6 +574,7 @@ buildTimeline();
 
 function selectStop(id, flyTo) {
   activeStopId = id;
+  activeCameraFollow = null;
 
   updateTimelineState();
 
@@ -510,14 +582,24 @@ function selectStop(id, flyTo) {
   const marker = markerObjects.find((m) => m.stop.id === id);
   if (selectedStop) {
     routeObjects.forEach((route) => {
-      const isAdjacent = route.from === id || route.to === id;
-      route.line.material.opacity = isAdjacent ? 0.9 : 0.12;
-      if (route.icon) route.icon.visible = isAdjacent;
+      const isOutbound = route.from === id;
+      route.line.visible = isOutbound;
+      route.line.material.opacity = 0.9;
+      if (route.icon) route.icon.visible = isOutbound;
     });
 
   }
 
-  if (selectedStop && flyTo) {
+  const routeToFollow = routeObjects.find(
+    (route) =>
+      route.from === id &&
+      CAMERA_FOLLOW_ROUTE_KEYS.has(`${route.from}:${route.to}`) &&
+      route.icon
+  );
+  const isStartingCameraFollow =
+    Boolean(selectedStop && flyTo && routeToFollow) && startCameraFollow(routeToFollow);
+
+  if (selectedStop && flyTo && !isStartingCameraFollow) {
     const position = marker
       ? marker.group.getWorldPosition(markerWorldPosition).clone()
       : latLonToVector3(selectedStop.lat, selectedStop.lon, GLOBE_RADIUS);
@@ -620,6 +702,34 @@ function animate() {
     const pulse = 1 + Math.sin(elapsed * 2.4 + i) * 0.18;
     m.ring.userData.pulse = pulse;
   });
+
+  routeObjects.forEach((route) => {
+    if (!route.icon || !route.icon.visible) return;
+
+    if (route.type === "voo") {
+      const progress = getRouteProgress(route, getFlightDuration(route), elapsed);
+      positionFlightIcon(route.icon, route.curve, progress);
+    }
+
+    if (route.type === "trem") {
+      const progress = getRouteProgress(route, TRAIN_DURATION_SECONDS, elapsed);
+      route.icon.position.copy(route.curve.getPointAt(progress));
+    }
+  });
+
+  if (activeCameraFollow) {
+    if (elapsed >= activeCameraFollow.endsAt) {
+      const { restorePosition, restoreTarget } = activeCameraFollow;
+      activeCameraFollow = null;
+      animateCamera(restorePosition, restoreTarget);
+    } else {
+      const { icon } = activeCameraFollow.route;
+      icon.getWorldPosition(routeIconWorldPosition);
+      const cameraTarget = routeIconWorldPosition.clone().normalize().multiplyScalar(6.6);
+      camera.position.lerp(cameraTarget, 0.055);
+      controls.target.lerp(routeIconWorldPosition, 0.1);
+    }
+  }
 
   controls.update();
   updateMarkerScale();
