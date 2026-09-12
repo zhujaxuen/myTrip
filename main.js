@@ -285,29 +285,44 @@ function updateMarkerScale() {
 const routeObjects = []; // { line, icon, type }
 
 function createRouteIcon(type) {
-  if (type !== "voo") return null;
-
-  const symbol = "✈";
+  const symbols = {
+    voo: String.fromCodePoint(0x2708),
+    trem: String.fromCodePoint(0x1f686),
+    metro: String.fromCodePoint(0x1f687),
+    onibus: String.fromCodePoint(0x1f68c),
+  };
+  const symbol = symbols[type];
+  if (!symbol) return null;
   const canvas = document.createElement("canvas");
   canvas.width = 64;
   canvas.height = 64;
   const context = canvas.getContext("2d");
-  context.font = '600 22px "Segoe UI Symbol", sans-serif';
+  context.font = '600 24px "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.fillStyle = "#ffffff";
   context.strokeStyle = "#05070d";
   context.lineWidth = 2;
   context.lineJoin = "round";
-  context.strokeText(symbol, 32, 32);
-  context.fillText(symbol, 32, 32);
+  // Os símbolos normalmente apontam para a direita. Giramos o desenho para
+  // que a frente do veículo corresponda ao eixo Y do marcador.
+  context.translate(32, 32);
+  context.rotate(-Math.PI / 2);
+  context.strokeText(symbol, 0, 0);
+  context.fillText(symbol, 0, 0);
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  const icon = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true })
+  const icon = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.16, 0.16),
+    new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthTest: true,
+      depthWrite: false,
+    })
   );
-  icon.scale.setScalar(0.08);
   icon.visible = false;
   return icon;
 }
@@ -343,6 +358,12 @@ function buildRoutes() {
     const icon = createRouteIcon(route.type);
     if (icon) {
       icon.position.copy(curve.getPoint(0.5));
+      const direction = curve.getTangent(0.5).normalize();
+      const normal = icon.position.clone().normalize();
+      const sideways = new THREE.Vector3().crossVectors(direction, normal).normalize();
+      icon.quaternion.setFromRotationMatrix(
+        new THREE.Matrix4().makeBasis(sideways, direction, normal)
+      );
       globeGroup.add(icon);
     }
     routeObjects.push({ line, icon, type: route.type, phase: route.phase, from: route.from, to: route.to });
@@ -370,7 +391,10 @@ function buildLegend() {
       const visible = !btn.classList.contains("off");
       routeObjects
         .filter((r) => r.type === type)
-        .forEach((r) => (r.line.visible = visible));
+        .forEach((r) => {
+          r.line.visible = visible;
+          if (r.icon) r.icon.visible = visible;
+        });
     });
 
     legend.appendChild(btn);
