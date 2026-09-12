@@ -113,6 +113,7 @@ overviewToggle.addEventListener("click", () => {
   updateTimelineState();
   routeObjects.forEach((route) => {
     route.line.material.opacity = 0.85;
+    if (route.icon) route.icon.visible = false;
   });
 });
 
@@ -281,7 +282,35 @@ function updateMarkerScale() {
 // Rotas (arcos entre pontos)
 // ============================================================
 
-const routeObjects = []; // { line, type }
+const routeObjects = []; // { line, icon, type }
+
+function createRouteIcon(type) {
+  if (type !== "voo") return null;
+
+  const symbol = "✈";
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const context = canvas.getContext("2d");
+  context.font = '600 22px "Segoe UI Symbol", sans-serif';
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = "#ffffff";
+  context.strokeStyle = "#05070d";
+  context.lineWidth = 2;
+  context.lineJoin = "round";
+  context.strokeText(symbol, 32, 32);
+  context.fillText(symbol, 32, 32);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const icon = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true })
+  );
+  icon.scale.setScalar(0.08);
+  icon.visible = false;
+  return icon;
+}
 
 function buildRoutes() {
   const stopsById = Object.fromEntries(TRIP.stops.map((s) => [s.id, s]));
@@ -311,7 +340,12 @@ function buildRoutes() {
 
     const line = new THREE.Line(geometry, material);
     globeGroup.add(line);
-    routeObjects.push({ line, type: route.type, phase: route.phase, from: route.from, to: route.to });
+    const icon = createRouteIcon(route.type);
+    if (icon) {
+      icon.position.copy(curve.getPoint(0.5));
+      globeGroup.add(icon);
+    }
+    routeObjects.push({ line, icon, type: route.type, phase: route.phase, from: route.from, to: route.to });
   });
 }
 buildRoutes();
@@ -343,6 +377,56 @@ function buildLegend() {
   });
 }
 buildLegend();
+
+// ============================================================
+// Estatísticas do roteiro
+// ============================================================
+
+function haversineKm(a, b) {
+  const earthRadiusKm = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLon = ((b.lon - a.lon) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * earthRadiusKm * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function buildStats() {
+  const stats = document.getElementById("stats");
+  if (!stats) return;
+
+  const stopsById = Object.fromEntries(TRIP.stops.map((stop) => [stop.id, stop]));
+  const totalKm = TRIP.routes.reduce((sum, route) => {
+    const from = stopsById[route.from];
+    const to = stopsById[route.to];
+    return from && to ? sum + haversineKm(from, to) : sum;
+  }, 0);
+
+  let countdown = "";
+  if (TRIP.startDate) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const departure = new Date(`${TRIP.startDate}T00:00:00`);
+    const days = Math.round((departure - today) / 86400000);
+    countdown = days > 1
+      ? `faltam <strong>${days}</strong> dias`
+      : days === 1
+        ? "falta <strong>1</strong> dia"
+        : days === 0
+          ? "a viagem começa <strong>hoje</strong> 🎉"
+          : "a viagem já começou 🎉";
+  }
+
+  stats.innerHTML = `
+    <span><strong>${TRIP.stops.length}</strong> paradas</span>
+    <span><strong>${Math.round(totalKm).toLocaleString("pt-BR")}</strong> km</span>
+    ${countdown ? `<span>${countdown}</span>` : ""}
+  `;
+}
+buildStats();
 
 // ============================================================
 // Painel lateral (linha do tempo)
@@ -404,6 +488,7 @@ function selectStop(id, flyTo) {
     routeObjects.forEach((route) => {
       const isAdjacent = route.from === id || route.to === id;
       route.line.material.opacity = isAdjacent ? 0.9 : 0.12;
+      if (route.icon) route.icon.visible = isAdjacent;
     });
 
   }
@@ -413,7 +498,10 @@ function selectStop(id, flyTo) {
       ? marker.group.getWorldPosition(markerWorldPosition).clone()
       : latLonToVector3(selectedStop.lat, selectedStop.lon, GLOBE_RADIUS);
     const target = position.normalize().multiplyScalar(3.8);
-    animateCamera(target);
+    const focusTarget = window.innerWidth <= 720
+      ? globeGroup.position.clone()
+      : controls.target.clone();
+    animateCamera(target, focusTarget);
     overviewToggle.hidden = false;
   }
 }

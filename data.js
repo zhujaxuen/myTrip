@@ -10,6 +10,9 @@ const TRIP = {
   title: "Minha viagem à China",
   subtitle: "De Curitiba à China, passando por Istambul",
 
+  // Usada apenas pelo contador no topo da página.
+  startDate: "2026-10-09",
+
   // Ordem cronológica das paradas da viagem
   stops: [
     {

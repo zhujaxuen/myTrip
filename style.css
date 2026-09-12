@@ -104,6 +104,20 @@ header p {
   max-width: 340px;
 }
 
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.stats strong {
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
 .legend {
   pointer-events: auto;
   display: flex;
@@ -189,7 +203,7 @@ header p {
   bottom: 0;
   width: 340px;
   z-index: 9;
-  padding: 108px 0 24px;
+  padding: 132px 0 24px;
   overflow-y: auto;
   background: linear-gradient(180deg, rgba(18, 24, 43, 0.85), rgba(10, 14, 26, 0.92));
   backdrop-filter: blur(14px);
@@ -422,7 +436,7 @@ header p {
 
   .title-block {
     min-width: 0;
-    max-width: calc(100vw - 132px);
+    max-width: calc(100vw - 190px);
   }
 
   header h1 {
@@ -442,10 +456,15 @@ header p {
   }
 
   .header-controls {
-    flex-direction: column;
-    align-items: flex-end;
+    position: absolute;
+    top: max(14px, env(safe-area-inset-top));
+    right: 14px;
+    flex-direction: row;
+    align-items: flex-start;
     gap: 6px;
     flex-shrink: 0;
+    width: max-content;
+    flex-wrap: nowrap;
   }
 
   .rotation-toggle {
